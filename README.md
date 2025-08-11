@@ -64,3 +64,35 @@ If you want to learn more about building native executables, please consult <htt
 Easily start your RESTful Web Services
 
 [Related guide section...](https://quarkus.io/guides/getting-started#the-jax-rs-resources)
+
+### Create Kubernetes cluster
+- Follow to install and create cluster with minikube: https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download
+
+- In this section, we will use a NodePort Service to allow to access service within Kubernetes. Check running services with: minikube services list
+
+### Monitoring the amount of containerized services inside pod: 
+```shell script
+minikube addons enable metrics-server
+```
+
+### Deployment for pods
+- Note: to avoid building and pushing image to registry before using incase we want to use Docker image right in VM/container created by Minikube use this command: eval $(minikube -p minikube docker-env)
+-> This will set the output environment in the CURRENT shell (in the CURRENT terminal window). Then when build image at local, it will compile and deploy right in the cluster.
+
+- Check the deployments with: kubectl get deployments. File deployment.yaml will be created in target/kubernetes/minikube.yml
+
+### Deploy to Kubernetes: 
+```shell script
+mvn verify -Dquarkus.kubernetes.deploy=true
+```
+
+- Check the deployed service (get the name from service in file deployment.yaml)
+```shell script
+minikube service code-with-quarkus --url  
+```
+
+- Measure resource usage using kubectl:
+```shell script
+kubectl top pods
+```
+

@@ -13,4 +13,10 @@ public class GreetingResource {
     public String hello() {
         return "Hello RESTEasy";
     }
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String welcome() {
+        return "Welcome to RESTEasy";
+    }
 }
