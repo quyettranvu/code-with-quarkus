@@ -130,6 +130,8 @@
             <properties>
                 <skipITs>false</skipITs>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
+                <!-- Enable Quarkus native binary build but included only in CI pipeline -->
+                <!-- <quarkus.package.type>native</quarkus.package.type> -->
             </properties>
         </profile>
     </profiles>
