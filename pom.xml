@@ -60,10 +60,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-minikube</artifactId>
         </dependency>
-        <dependency>
+        <!--Default Quarkus BOM support Vert.X web, if need to specify another version, define it in properties -->
+        <!-- <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx-web</artifactId>
-        </dependency>
+        </dependency> -->
     </dependencies>
 
     <build>
