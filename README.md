@@ -78,9 +78,15 @@ minikube addons enable metrics-server
 ### Deployment for pods
 - Note: to avoid building and pushing image to registry before using incase we want to use Docker image right in VM/container created by Minikube use this command: 
 ```shell script
+minikube start # if minikube is not started
 eval $(minikube -p minikube docker-env)
 ```
 -> This will set the output environment in the CURRENT shell (in the CURRENT terminal window). Then when build image at local, it will compile and deploy right in the cluster.
+
+*** Check our minikube is ready with command for checking current nodes: 
+```shell script
+kubectl get nodes
+```
 
 - Check the deployments with: **kubectl get deployments**. File deployment will be created in target/kubernetes/minikube.yml
 
@@ -89,17 +95,17 @@ eval $(minikube -p minikube docker-env)
 mvn verify -Dquarkus.kubernetes.deploy=true
 ```
 
-- Check the deployed service (get the name from service in file deployment.yaml)
+- Check the deployed service (get the name from service in file deployment.yaml) by exposing it:
 ```shell script
 minikube service code-with-quarkus --url  
 ```
 
-- Measure resource usage using kubeccha
+- Measure resource usage using kubeccha, with the following command will checkthe usage of our containerized service:
 ```shell script
 kubectl top pods
 ```
 
-### Build a native executable for Quarkus to optimize the build process during build time
+### Build a native executable for Quarkus with GraalVM to optimize the build process during build time
 - Prerequisite: following the instruction "Building a Native Executable" to make sure they are installed correcly: https://quarkus.io/guides/building-native-image
 
 - Compile Quarkus application into executable binary codes:
@@ -150,5 +156,15 @@ docker build -f src/main/docker/Dockerfile.native \
 # create the minikube deployment
 kubectl apply -f target/kubernetes/minikube.yml
 
+# Verity and run the container
 mvn verify -Pnative -Dquarkus.native.container-build=true
 ```
+
+### Test Interceptor to understand about fault resolver:
+```shell script
+curl http://127.0.0.1:63905/fault?mode=INBOUND_REQUEST_LOSS # change mode to inject the desired faulty resolver
+curl --max-time 5 http://127.0.0.1:63905/
+curl --max-time 5 --retry 100 --retry-all-errors http://127.0.0.1:63905/
+```
+
+Note: please be cautious that retry should be used only if that service is idempotent: Gọi 1 lần hay gọi nhiều lần với cùng dữ liệu và cùng điều kiện, kết quả giống hệt nhau và không gây ra tác dụng phụ bổ sung, dữ liệu trùng hay kết quả không mong muốn 
