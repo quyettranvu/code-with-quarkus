@@ -15,6 +15,7 @@
         <quarkus.platform.version>3.25.2</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.3</surefire-plugin.version>
+        <vertx-core.version>4.4.0</vertx-core.version>
     </properties>
 
     <dependencyManagement>
@@ -59,6 +60,16 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-minikube</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.2.4.Final</version>
+        </dependency>
+         <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+            <version>${vertx-core.version}</version>
         </dependency>
         <!--Default Quarkus BOM support Vert.X web, if need to specify another version, define it in properties -->
         <!-- <dependency>

@@ -167,4 +167,22 @@ curl --max-time 5 http://127.0.0.1:63905/
 curl --max-time 5 --retry 100 --retry-all-errors http://127.0.0.1:63905/
 ```
 
-Note: please be cautious that retry should be used only if that service is idempotent: Gọi 1 lần hay gọi nhiều lần với cùng dữ liệu và cùng điều kiện, kết quả giống hệt nhau và không gây ra tác dụng phụ bổ sung, dữ liệu trùng hay kết quả không mong muốn 
+Note: please be cautious that retry should be used only if that service is idempotent: Even call 1 time or multiple times with the same data and conditions, the result will be identical and there are no additional side effects, repeated data or unexpected result.
+
+### Reactive framework architecture
+Based on two Reactive patterns: multireactor(like Vert.x) and proactor(like Quarkus):
+![alt text](image.png)
+![alt text](image-1.png)
+=> In the multireactor pattern, event loop as a single-thread loop, with responsibility: listen I/O operations, event is ready, enqueue it and dispatch to the event handler. It can handle multiple concurrent requests thanks to NIO Selector. However, like Quarkus, when in need of dealing with heavy request, process then offload to a worker thread can solve this but not abuse it since it can penalize response time.
+
+Many Reactive frameworks are built based on common architecture of managing event loop and event handler:
+![alt text](image-2.png)
+
+1/ At the layer of Nonblocking I/O (where client connection, outbound requests, response writing): on Reactive pattern and so provides an event-loop based model. In source code displaying the client-server connection and non-blocking I/O chanel using example of Vert.x and Netty.
+
+2/ At the layer of Reactive framework: provides high-level APIs (HTTP requests, responses, Kafka messages, ...) to write the application code (layer 3).
+
+3/ At the layer of application: a set of event handlers, there will use features of Reactive framework to communicate with services or middlewares.
+
+
+

@@ -1,5 +1,7 @@
 package org.acme.blocking;
 
+import org.acme.constants.ServerResultStatus;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -24,7 +26,7 @@ public class BlockingEchoServer {
                     System.out.println("Server received message from client: " + line);
                     response.println(line);
 
-                    if ("done".equalsIgnoreCase(line)) {
+                    if (ServerResultStatus.DONE.value().equalsIgnoreCase(line)) {
                         break;
                     }
                 }

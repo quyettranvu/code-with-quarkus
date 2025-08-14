@@ -1,4 +1,4 @@
-package org.acme.reactive.fault;
+package org.acme.fault;
 
 import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.RouteFilter;
