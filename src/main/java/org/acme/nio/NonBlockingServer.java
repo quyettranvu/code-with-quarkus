@@ -40,7 +40,7 @@ public class NonBlockingServer {
                     SocketChannel clientChannel = serverChannel.accept();
                     clientChannel.configureBlocking(false);
                     clientChannel.register(selector, SelectionKey.OP_READ);
-                    System.out.println("Client connection accepted and registered with selector for reading: " + clientChannel.getLocalAddress())
+                    System.out.println("Client connection accepted and registered with selector for reading: " + clientChannel.getLocalAddress());
                 } 
                 else if (selectedKey.isReadable()) {
                     SocketChannel clientReadChannel = selectedKey.channel();
