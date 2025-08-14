@@ -56,7 +56,7 @@ public class GreetingResource {
             serverThread.start();
             return "BlockingWithWorkerEchoServer started on port 9999.";
         }
-        return "BlockingWithWorkerEchoServer is already running."
+        return "BlockingWithWorkerEchoServer is already running.";
     }
 
     @GET

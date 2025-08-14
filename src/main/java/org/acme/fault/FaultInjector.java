@@ -73,19 +73,27 @@ public class FaultInjector {
         }
 
         if (ratio > random.nextDouble()) {
-            swich(this.mode):
+            swich(this.mode) {
                 case INBOUND_REQUEST_LOSS:
                     //Inbound request is loss, do not call the service and no need to inject fault
                     break;
                 case SERVICE_FAILURE:
                     rc.next();
-                    rx.response()
+                    rc.response()
                         .setStatusCode(500)
                         .end("FAULTY RESPONSE");
                     break;
                 case OUTBOUND_RESPONSE_LOSS:
                     rc.next();
-                    rc.response().close();
+                    rc.addBodyEndHandler(v -> {
+                        // Close after the route wrote the response (simulate loss)
+                        rc.response().close();
+                    });
+                    break;
+                default:
+                    rc.next();
+                    break;
+            }
         } else {
             // if still within the range
             rc.next();
