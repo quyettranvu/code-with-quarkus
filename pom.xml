@@ -16,6 +16,8 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.3</surefire-plugin.version>
         <vertx-core.version>4.4.0</vertx-core.version>
+        <mutiny.version>1.6.0</mutiny.version>
+        <mutiny-vertx.version>2.21.0</mutiny-vertx.version>
     </properties>
 
     <dependencyManagement>
@@ -70,6 +72,16 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
             <version>${vertx-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>mutiny</artifactId>
+            <version>${mutiny.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-mutiny-vertx-core</artifactId>
+            <version>${mutiny-vertx.version}</version>
         </dependency>
         <!--Default Quarkus BOM support Vert.X web, if need to specify another version, define it in properties -->
         <!-- <dependency>
