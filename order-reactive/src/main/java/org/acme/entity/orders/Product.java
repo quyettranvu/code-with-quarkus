@@ -1,4 +1,4 @@
-package org.acme.orders;
+package org.acme.entity.orders;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;

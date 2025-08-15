@@ -68,6 +68,7 @@
     <modules>
         <module>server-reactive</module>
         <module>order-reactive</module>
+        <module>multiny-reactive-management</module>
     </modules>
 
 </project>

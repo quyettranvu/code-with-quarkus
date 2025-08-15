@@ -1,4 +1,4 @@
-package org.acme.entity;
+package org.acme.entity.orders;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 
