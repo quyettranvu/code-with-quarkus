@@ -21,6 +21,10 @@
 
         <surefire-plugin.version>3.5.3</surefire-plugin.version>
         <compiler-plugin.version>3.14.0</compiler-plugin.version>
+
+        <vertx-core.version>4.5.8</vertx-core.version>
+        <mutiny.version>2.5.1</mutiny.version>
+        <mutiny-vertx.version>3.13.0</mutiny-vertx.version>
     </properties>
 
     <dependencyManagement>

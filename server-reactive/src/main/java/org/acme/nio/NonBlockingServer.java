@@ -43,7 +43,7 @@ public class NonBlockingServer {
                     System.out.println("Client connection accepted and registered with selector for reading: " + clientChannel.getLocalAddress());
                 } 
                 else if (selectedKey.isReadable()) {
-                    SocketChannel clientReadChannel = selectedKey.channel();
+                    SocketChannel clientReadChannel = (SocketChannel) selectedKey.channel();
                     ByteBuffer payloadBuffer = ByteBuffer.allocate(256);
                     int size =clientReadChannel.read(payloadBuffer);
                     if (size != -1) { // handle the disconnection if no more data can be read
@@ -51,7 +51,7 @@ public class NonBlockingServer {
                         clientReadChannel.close();
                         selectedKey.cancel();
                     } else {
-                        String result = new String(payload.array(), StandardCharsets.UTF_8).trim();
+                        String result = new String(payloadBuffer.array(), StandardCharsets.UTF_8).trim();
                         System.out.println("Received message: " + result);
                         if (result.equals(ServerResultStatus.DONE.value())) {
                             clientReadChannel.close();
@@ -59,7 +59,7 @@ public class NonBlockingServer {
 
                         // prepare the buffer for writing and echo the received message back to the client
                         payloadBuffer.rewind();
-                        clientReadChannel.write(buffer);
+                        clientReadChannel.write(payloadBuffer);
                     }
                 }
                 keyIterator.remove(); // be sure not making twice

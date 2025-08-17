@@ -11,6 +11,8 @@ import org.acme.nio.NonBlockingServer;
 import org.acme.netty.NettyEchoServer;
 import org.acme.vertx.VertxEchoServer;
 
+import java.io.IOException;
+
 @Path("/hello")
 public class GreetingResource {
 
@@ -86,7 +88,7 @@ public class GreetingResource {
             serverThread = new Thread(() -> {
                 try {
                     NettyEchoServer.main(new String[]{});
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }, "non-blocking-server-using-netty");
@@ -105,7 +107,7 @@ public class GreetingResource {
             serverThread = new Thread(() -> {
                 try {
                     VertxEchoServer.main(new String[]{});
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }, "non-blocking-server-using-vertx");

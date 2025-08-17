@@ -1,4 +1,4 @@
-package org.acme.sercices.streams;
+package org.acme.services.streams;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.infrastructure.Infrastructure;

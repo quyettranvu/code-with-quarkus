@@ -1,4 +1,4 @@
-package org.acme;package org.acme;
+package org.acme;
 
 import io.smallrye.mutiny.Multi;
 

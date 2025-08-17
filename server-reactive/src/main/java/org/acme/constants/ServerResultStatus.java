@@ -1,3 +1,5 @@
+package org.acme.constants;
+
 public enum ServerResultStatus {
     DONE("done"),
     STOP("stop");
