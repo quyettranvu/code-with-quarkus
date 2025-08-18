@@ -63,6 +63,14 @@
             <artifactId>smallrye-mutiny-vertx-core</artifactId>
             <version>${mutiny-vertx.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-reactive-panache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-reactive-pg-client</artifactId>
+        </dependency>
         <!--Default Quarkus BOM support Vert.X web, if need to specify another version, define it in properties -->
         <!-- <dependency>
             <groupId>io.quarkus</groupId>

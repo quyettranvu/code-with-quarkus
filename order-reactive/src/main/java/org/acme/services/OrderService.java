@@ -16,6 +16,8 @@ public class OrderService {
 
     @Inject UserService userService;
 
+    @Inject PgPool pgClient;
+
     public Uni<Long> placeOrder(UserProfile user, List<Product> products) {
         Order order = new Order();
         order.userId = user.id;
@@ -41,5 +43,14 @@ public class OrderService {
     public Multi<Order> getOrderForUserName(String userName) {
         return getAllOrders().select().when(order -> userService.getUserByName(userName))
                             .onItem().transform(u -> u.name.equalsIgnoreCase(userName));
+    }
+
+    public Uni<List<Order>> getOrdersForCustomer(Long customer) {
+        return pgClient
+            .preparedQuery("SELECT id, customerid, description, total FROM orders WHERE customerid = $1")
+            .execute(Tuple.of(customer))
+            .onItem().transformToMulti(set -> Multi.createFrom().iterable(set))
+            .onItem().transform(Order::from)
+            .collect().asList();
     }
 }
