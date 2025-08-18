@@ -1,22 +1,23 @@
 package org.acme.services.future;
 
 import io.smallrye.mutiny.tuples.Tuple2;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-@Service
+@ApplicationScoped
 public class GreetingService {
 
      public static void main(String[] args) { 
         GreetingHelperService service = new GreetingHelperService();
-        // return the completation state object without detailed processing
-        CompletationState<String> future = service.greeting("Luke");
+        // return the completion state object without detailed processing
+        CompletionStage<String> future = service.greeting("Luke");
         
-        // in case of diving into process, consume and transform
+        // in case of diving into a process, consume and transform
         service.greeting("Luke")
-            .thenApply(response -> response.toUpperCase())
-            .thenAccept(greeting -> System.out.println(greeting));
+            .thenApply(String::toUpperCase)
+            .thenAccept(System.out::println);
 
         service.greeting("Luke")
             .thenCompose(greetingForLuke -> {
@@ -42,7 +43,7 @@ public class GreetingService {
     
     static class GreetingHelperService {
         CompletionStage<String> greeting(String name) {
-            return completedFuture.completedFuture("Hello " + name);
+            return CompletableFuture.completedFuture("Hello " + name);
         }
     }
 }

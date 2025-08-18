@@ -5,13 +5,13 @@ import io.smallrye.mutiny.tuples.Tuple2;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.file.AsyncFile;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
@@ -20,13 +20,14 @@ import java.util.Random;
 @Path("/stream-vertx")
 public class StreamVertxResouce {
 
-    @Inject Vertx vertx;
+    @Inject
+    Vertx vertx;
 
     @GET
     @Path("/book")
     @Produces(MediaType.TEXT_PLAIN)
-    public Multi<String> readBook() {
-        Multi<Long> ticks = Multi.createForm().ticks().every(Duration.ofSeconds(1));
+    public Multi<String> readBookByMultiBuffer() {
+        Multi<Long> ticks = Multi.createFrom().ticks().every(Duration.ofSeconds(1));
         Multi<String> book = vertx.fileSystem().open("war-and-peace.txt", new OpenOptions().setRead(true))
                                 .onItem().transformToMulti(AsyncFile::toMulti)
                                 .onItem().transform(buffer -> buffer.toString("UTF-8"));
@@ -39,9 +40,9 @@ public class StreamVertxResouce {
     @GET
     @Path("/books")
     @Produces(MediaType.TEXT_PLAIN)
-    public Multi<String> readBook() {
-        Multi<Long> ticks = Multi.createForm().ticks().every(Duration.ofSeconds(1));
-        Multi<String> books = bookService.getBooks(); 
+    public Multi<Book> readBook() {
+        Multi<Long> ticks = Multi.createFrom().ticks().every(Duration.ofSeconds(1));
+        Multi<Book> books = bookService.getBooks();
         return Multi.createBy().combining().streams(ticks, books).asTuple()
                                 .onItem().transform(Tuple2::getItem2);
     }
@@ -51,7 +52,7 @@ public class StreamVertxResouce {
     @GET
     @Path("/books")
     @Produces(MediaType.SERVER_SENT_EVENTS)// SSE mechanism will allow to stream unbounded structured data using HTTP
-    public Multi<String> readBook() {
+    public Multi<Quote> readBookSSE() {
         return market.getEventStream();
     }
 

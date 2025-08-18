@@ -4,7 +4,7 @@ import io.quarkus.vertx.web.Route;
 import io.quarkus.vertx.web.RouteFilter;
 import io.vertx.ext.web.RoutingContext;
 
-import javax.enterprise.context.ApplicationScoped; // If on Quarkus 3+, prefer: jakarta.enterprise.context.ApplicationScoped
+import jakarta.enterprise.context.ApplicationScoped; // If on Quarkus 3+, prefer: jakarta.enterprise.context.ApplicationScoped
 import java.util.Random;
 
 @ApplicationScoped

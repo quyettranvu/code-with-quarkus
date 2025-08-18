@@ -1,8 +1,9 @@
 package org.acme.entity.orders;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
+import io.vertx.mutiny.sqlclient.Row;
+import jakarta.persistence.*;
 
-import javax.persistence.*;
 import java.util.List;
 
 @Entity
@@ -19,4 +20,12 @@ public class Order extends PanacheEntity {
     )
     public List<Product> products;
 
+    public static Order from(Row row) {
+        Order o = new Order();
+        o.id = row.getLong("id");
+//        o.customerId = row.getLong("customerid");
+//        o.description = row.getString("description");
+//        o.total = row.getDouble("total");
+        return o;
+    }
 }

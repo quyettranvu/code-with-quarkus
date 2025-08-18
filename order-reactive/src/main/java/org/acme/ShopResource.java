@@ -1,9 +1,16 @@
 package org.acme;
 
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.acme.entity.customer.Customer;
 import org.acme.entity.users.UserProfile;
+import org.acme.services.OrderService;
+import org.acme.services.ProductService;
 import org.acme.services.UserService;
-import org.acme.sevices.ProductService;
-import org.acme.service.OrderService;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Sort;
@@ -14,15 +21,12 @@ import org.acme.entity.orders.Order;
 import org.acme.entity.orders.Product;
 import org.acme.dto.ProductModel;
 import org.acme.utils.StringUtil;
+import org.jboss.resteasy.reactive.RestPath;
 
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import java.time.Duration;
 import java.util.List;
-import javax.validation.Valid;
-import javax.ws.rs.core.Response;
+
+import static io.smallrye.mutiny.helpers.spies.Spy.onFailure;
 
 @Path("/shop")
 public class ShopResource {
@@ -65,7 +69,7 @@ public class ShopResource {
 
     @POST
     @Path("/user/{name}")
-    public Long createNewUser(@QueryParams("name") String name) {
+    public Long createNewUser(@QueryParam("name") String name) {
         return userService.createUser(name)
                 .onItem().invoke(item -> System.out.println("New user created: " + name + ", id: " + l))
                 .onFailure().invoke(failure -> System.out.println("Cannot create the user " + name + ": " + failure.getMessage()));
@@ -83,17 +87,17 @@ public class ShopResource {
     @Path("/orders")
     public Multi<Order> getAllOrders() {
         return userService.getAllUsers()
-                .onItem().transformToUniAndConcatenate(user -> orderService.getOrderForUser(user));
+                .onItem().transformToUniAndConcatenate(user -> orderService.getOrderForUser(user).toUni());
         // in case not matter the order
         // return userService.getAllUsers()
         //         .onItem().transformToMultiAndMerge(user -> orderService.getOrderForUser(user));
     }
 
-    @Get
+    @GET
     @Path("/orders/{user}")
     public Multi<Order> getAllOrdersForUser(@PathParam("user") String userName) {
         return userService.getUserByName(userName)
-                .onItem().transformToMulti(user -> orderService.getOrderForUser(user));
+                .onItem().transformToMulti(orderService::getOrderForUser);
     }
 
     @GET
@@ -119,7 +123,7 @@ public class ShopResource {
 
     @GET
     @Path("/random-recommendations")
-    public Multi<String> getRandomRecommendations() {
+    public Multi<String> getRandomRecommendationsAsCombination() {
         Multi<UserProfile> multi1 = Multi.createFrom().ticks().every(Duration.ofSeconds(1)).onOverflow().drop()
                                         .onItem().transformToUniAndConcatenate(x -> userService.getRandomUser());
         Multi<Product> multi2 = Multi.createFrom().ticks().every(Duration.ofSeconds(1)).onOverflow().drop()
@@ -143,7 +147,7 @@ public class ShopResource {
         Uni<List<Order>> customerOrdersUni = orderService.getAllOrdersForCustomer();
         return Uni.combine()
                 .all.unis(customerUni, customerOrdersUni).asTuple()
-                .onItem().transform(customer -> Response.ok(customer).build());
+                .onItem().transform(customer -> Response.ok().build());
     }
 
     @POST
@@ -167,7 +171,7 @@ public class ShopResource {
                 .onItem().ifNotNull().invoke(entity -> entity.name = customer.name)
         )
         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-        .onItem().ifNull().continuewith(Response.ok(entity).status(Response.Status.NOT_FOUND).build());
+        .onItem().ifNull().continueWith(Response.ok(entity).status(Response.Status.NOT_FOUND).build());
     }
 
     @DELETE

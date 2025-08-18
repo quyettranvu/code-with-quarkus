@@ -3,13 +3,11 @@ package org.acme.vertx;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.file.FileSystemException;
 import io.vertx.mutiny.core.Vertx;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
-
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-
 
 @Path("/multiny-vertx")
 public class MultinyVertxResouce {

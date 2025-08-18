@@ -1,9 +1,9 @@
-package com.acme.dto;
+package org.acme.dto;
 
 public class ProductModel {
     public final String name;
 
-    private ProductModel(String name) {
+    public ProductModel(String name) {
         this.name = name;
     }
 }

@@ -1,12 +1,12 @@
-package org.acme;
+package org.acme.services;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import org.acme.orders.Product;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.acme.entity.orders.Product;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Random;
 
@@ -23,7 +23,7 @@ public class ProductService {
     public Uni<Void> createProduct(String name) {
         Product product = new Product();
         product.name = name;
-        return Panache.withTransaction(product::persists).replaceWithVoid();
+        return Panache.withTransaction(product::persist).replaceWithVoid();
     }
 
     public Uni<Product> getRecommendedProduct() {
