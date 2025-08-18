@@ -14,10 +14,32 @@ import java.util.List;
 @ApplicationScoped
 public class OrderService {
 
-    @Inject UserService users;
+    @Inject UserService userService;
+
+    public Uni<Long> placeOrder(UserProfile user, List<Product> products) {
+        Order order = new Order();
+        order.userId = user.id;
+        order.products = products;
+        return Panache.withTransaction(()-> {
+            Uni<Order> uni = order.persist();
+            return uni.onItem().transform(o -> o.id);
+        });
+    }
+
+    public Multi<Order> getAllOrders() {
+        return Order.streamAll();
+    }
 
     public Multi<Order> getOrderForUser(UserProfile userProfile) {
         return Order.stream("userId", userProfile.id);
     }
 
+    public Multi<Order> getLargeOrders() {
+        return getAllOrders().select().where(order -> order.products.size() > 3);
+    }
+
+    public Multi<Order> getOrderForUserName(String userName) {
+        return getAllOrders().select().when(order -> userService.getUserByName(userName))
+                            .onItem().transform(u -> u.name.equalsIgnoreCase(userName));
+    }
 }

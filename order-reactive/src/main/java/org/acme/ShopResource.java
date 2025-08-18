@@ -25,7 +25,7 @@ import java.util.List;
 public class ShopResource {
 
     private final UserService userService;
-    private final ProductService productService;
+    private final ProductService    productService;
     private final OrderService orderService;
 
     @Inject
@@ -46,6 +46,7 @@ public class ShopResource {
 
     public Uni<String> addUser(String name) {
         return userService.createUser(name)
+                .onFailure().retry().withBackOff(Duration.ofSeconds(5))
                 .onItem().transform(id -> "New User " + name + " inserted")
                 .onFailure().recoverWithItem(failure -> "User not inserted: " + failure.getMessage());
     }
@@ -99,5 +100,29 @@ public class ShopResource {
         return Multi.createFrom().ticks().every(Duration.ofSeconds(1))
                 .onOverflow().drop() // since the backpressure is not appropriate in this context cause we want all the latest recommendations as fast as possible, so choosing dropif overflowing
                 .onItem().transformToUniAndConcatenate(x -> productService.getRecommendations());
+    }
+
+    @GET
+    @Path("/random-recommendation")
+    public Uni<String> getRandomRecommendations() {
+        Uni<UserProfile> uni1 = userService.getRandomUser();
+        Uni<Product> uni2 = productService.getRecommendedProduct();
+        Uni.combine().all().unis(uni1, uni2).asTuple() //convert to tubplt
+                .onItem().transform(tuple -> "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().name);
+                return Multi.createBy().combining().streams(u, p ).asTuple()
+                            .onItem().transform(tuple -> "Hello " + tuple.getItem1().name", we recommend you "
+                            + tuple.getItem2().name);
+        }
+
+    @GET
+    @Path("/random-recommendations")
+    public Multi<String> getRandomRecommendations() {
+        Multi<UserProfile> multi1 = Multi.createFrom().ticks().every(Duration.ofSeconds(1)).onOverflow().drop()
+                                        .onItem().transformToUniAndConcatenate(x -> userService.getRandomUser());
+        Multi<Product> multi2 = Multi.createFrom().ticks().every(Duration.ofSeconds(1)).onOverflow().drop()
+                                        .onItem().transformToUniAndConcatenate(y -> productService.getRecommendedProduct());
+        Uni<Product> uni2 = productService.getRecommendedProduct();
+        return Uni.combine().all().unis(uni1, uni2).asTuple() //convert to tubplt
+                .onItem().transform(tuple -> "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().name);
     }
 }
