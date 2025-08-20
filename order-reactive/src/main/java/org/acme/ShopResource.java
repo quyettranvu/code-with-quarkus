@@ -11,6 +11,7 @@ import org.acme.entity.users.UserProfile;
 import org.acme.services.OrderService;
 import org.acme.services.ProductService;
 import org.acme.services.UserService;
+impotr org.acme.services.CustomerService;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Sort;
@@ -19,27 +20,33 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import org.acme.entity.orders.Order;
 import org.acme.entity.orders.Product;
+import org.acme.entity.customer.CustomerRedis;
 import org.acme.dto.ProductModel;
 import org.acme.utils.StringUtil;
 import org.jboss.resteasy.reactive.RestPath;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.ws.rs.core.Response;
 
 import static io.smallrye.mutiny.helpers.spies.Spy.onFailure;
 
 @Path("/shop")
 public class ShopResource {
 
+    private final AtomicLong customerId = new AtomicLong(1);
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final CustomerService customerService;
 
     @Inject
-    public ShopResource(UserService userService, ProductService productService, OrderService orderService) {
+    public ShopResource(UserService userService, ProductService productService, OrderService orderService, CustomerService customerService) {
         this.userService = userService;
         this.productService = productService;
         this.orderService = orderService;
+        this.customerService = customerService;
     }
 
     public void init(@Observes StartupEvent ev) {
@@ -179,5 +186,50 @@ public class ShopResource {
     public Uni<Response> deleteCustomer(@RestPath Long id) {
         return Panache.withTransaction(() -> Customer.deleteById(id))
         .map(deleted -> deleted ? Response.ok().status(Response.Status.OK).build() : Response.ok().status(Response.Status.NOT_FOUND).build());
+    }
+
+    @GET
+    @Path("/customer-redis")
+    public Multi<CustomerRedis> getAllCustomersRedis() {
+        return customerService.getAllCustomers();
+    }
+
+    @GET
+    @Path("/customer-redis/{id}")
+    public Uni<CustomerRedis> getCustomerRedis() {
+        return customerService.getCustomer(id).onItem().ifNull().failWith(new WebApplicationException("Failed to find customer", Response.Status.NOT_FOUND));
+    }
+
+    
+    @POST
+    public Uni<Response> createCustomer(Customer customer) {
+        if (customer.id != null || customer.name.length() == 0) {
+            throw new WebApplicationException("Invalid customer set on request", 422);
+        }
+
+        customer.id = customerId.getAndIncrement();
+
+        return customerService.createCustomer(customer)
+            .onItem().transform(cust -> Response.ok(cust).status(Response.Status.CREATED).build())
+            .onFailure().recoverWithItem(Response.serverError().build());
+    }
+    
+    @POST
+    public Uni<Response> updateCustomer(Customer customer) {
+        if (customer.id == null || (customer.name == null || customer.name.length() == 0))  {
+            throw new WebApplicationException("Invalid customer set on request", 422);
+        }
+
+        return customerService.updateCustomer(customer)
+            .onItem().transform(cust -> Response.ok(cust).status(Response.Status.CREATED).build())
+            .onFailure().recoverWithItem(Response.serverError().build());
+    }
+
+    @DELETE
+    @Path("/customer-redis/{id}")
+    public Uni<Response> deleteCustomer(@RestPath Long id) {
+        return customerService.deleteCustomer(id)
+            .onItem().transform(i -> Response.ok().status(Response.Status.NO_CONTENT).build())
+            .onFailure().recoverWithItem(Response.ok().status(Response.Status.NOT_FOUND).build());
     }
 }
