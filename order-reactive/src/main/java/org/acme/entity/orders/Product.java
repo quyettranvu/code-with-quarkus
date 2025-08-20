@@ -11,10 +11,18 @@ import java.util.Set;
 @Table(name = "products")
 public class Product extends PanacheEntity {
 
-    public String name;
+    private String name;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "products", cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     public Set<Order> orders = new HashSet<>();
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
 }

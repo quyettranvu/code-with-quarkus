@@ -2,10 +2,10 @@ package org.acme.entity.orders;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import io.vertx.mutiny.sqlclient.Row;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity

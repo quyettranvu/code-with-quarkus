@@ -8,10 +8,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.acme.entity.customer.Customer;
 import org.acme.entity.users.UserProfile;
+import org.acme.services.CustomerRedisService;
 import org.acme.services.OrderService;
 import org.acme.services.ProductService;
 import org.acme.services.UserService;
-impotr org.acme.services.CustomerService;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Sort;
@@ -28,7 +28,6 @@ import org.jboss.resteasy.reactive.RestPath;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.ws.rs.core.Response;
 
 import static io.smallrye.mutiny.helpers.spies.Spy.onFailure;
 
@@ -39,10 +38,10 @@ public class ShopResource {
     private final UserService userService;
     private final ProductService productService;
     private final OrderService orderService;
-    private final CustomerService customerService;
+    private final CustomerRedisService customerService;
 
     @Inject
-    public ShopResource(UserService userService, ProductService productService, OrderService orderService, CustomerService customerService) {
+    public ShopResource(UserService userService, ProductService productService, OrderService orderService, CustomerRedisService customerService) {
         this.userService = userService;
         this.productService = productService;
         this.orderService = orderService;
@@ -60,7 +59,7 @@ public class ShopResource {
 
     public Uni<String> addUser(String name) {
         return userService.createUser(name)
-                .onFailure().retry().withBackOff(Duration.ofSeconds(5))
+                .onFailure().retry().withBackOff(Duration.ofSeconds(5)).atMost(3)
                 .onItem().transform(id -> "New User " + name + " inserted")
                 .onFailure().recoverWithItem(failure -> "User not inserted: " + failure.getMessage());
     }
@@ -70,24 +69,28 @@ public class ShopResource {
     public Uni<String> getByUserName(@PathParam("name") String name) {
         Uni<UserProfile> uniUser = userService.getUserByName(name);
         return uniUser
-                .onItem().transform(user -> user.name);
+                .onItem().transform(user -> user.name)
                 .onFailure().recoverWithItem("anonymous");
     }
 
     @POST
     @Path("/user/{name}")
-    public Long createNewUser(@QueryParam("name") String name) {
+    public Uni<Long> createNewUser(@QueryParam("name") String name) {
         return userService.createUser(name)
-                .onItem().invoke(item -> System.out.println("New user created: " + name + ", id: " + l))
+                .onItem().invoke(item -> System.out.println("New user created: " + name + ", id: " + item))
                 .onFailure().invoke(failure -> System.out.println("Cannot create the user " + name + ": " + failure.getMessage()));
     }
 
     @GET
     @Path("/products")
     public Multi<ProductModel> getProducts() {
-        return productService.getAllProducts()
-                .onItem().transform(item -> StringUtil.captializeAllFirstLetters(item.name))
-                .onFailure().transform(ProductModel::new);
+        return productService.getAllOrderedProducts()
+                .onItem().transform(product -> new ProductModel(
+                        StringUtil.captializeAllFirstLetters(product.getName())
+                ))
+                .onFailure().recoverWithItem(err ->
+                        new ProductModel("Unavailable" )
+                );
     }
 
     @GET
@@ -123,8 +126,8 @@ public class ShopResource {
         Uni<Product> uni2 = productService.getRecommendedProduct();
         Uni.combine().all().unis(uni1, uni2).asTuple() //convert to tuple
                 .onItem().transform(tuple -> "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().name);
-                return Multi.createBy().combining().streams(u, p ).asTuple()
-                            .onItem().transform(tuple -> "Hello " + tuple.getItem1().name", we recommend you "
+                return Multi.createBy().combining().streams(u, p).asTuple()
+                            .onItem().transform(    tuple -> "Hello " + tuple.getItem1().name + ", we recommend you "
                             + tuple.getItem2().name);
         }
 
@@ -136,8 +139,10 @@ public class ShopResource {
         Multi<Product> multi2 = Multi.createFrom().ticks().every(Duration.ofSeconds(1)).onOverflow().drop()
                                         .onItem().transformToUniAndConcatenate(y -> productService.getRecommendedProduct());
         Uni<Product> uni2 = productService.getRecommendedProduct();
-        return Uni.combine().all().unis(uni1, uni2).asTuple() //convert to tuple
-                .onItem().transform(tuple -> "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().name);
+        return Multi.createBy().combining().streams(multi1, multi2).asTuple()
+                .onItem().transform(tuple ->
+                        "Hello " + tuple.getItem1().getName() + ", we recommend you " + tuple.getItem2().getName()
+                );
     }
 
     @GET
@@ -153,7 +158,7 @@ public class ShopResource {
                  .onItem().ifNull().failWith(new WebApplicationException("Failed to find customer", Response.Status.NOT_FOUND));
         Uni<List<Order>> customerOrdersUni = orderService.getAllOrdersForCustomer();
         return Uni.combine()
-                .all.unis(customerUni, customerOrdersUni).asTuple()
+                .all().unis(customerUni, customerOrdersUni).asTuple()
                 .onItem().transform(customer -> Response.ok().build());
     }
 
@@ -178,7 +183,7 @@ public class ShopResource {
                 .onItem().ifNotNull().invoke(entity -> entity.name = customer.name)
         )
         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-        .onItem().ifNull().continueWith(Response.ok(entity).status(Response.Status.NOT_FOUND).build());
+        .onItem().ifNull().continueWith(Response.ok().status(Response.Status.NOT_FOUND).build());
     }
 
     @DELETE
@@ -196,14 +201,14 @@ public class ShopResource {
 
     @GET
     @Path("/customer-redis/{id}")
-    public Uni<CustomerRedis> getCustomerRedis() {
+    public Uni<CustomerRedis> getCustomerRedis(@RestPath Long id) {
         return customerService.getCustomer(id).onItem().ifNull().failWith(new WebApplicationException("Failed to find customer", Response.Status.NOT_FOUND));
     }
 
     
     @POST
-    public Uni<Response> createCustomer(Customer customer) {
-        if (customer.id != null || customer.name.length() == 0) {
+    public Uni<Response> createCustomer(CustomerRedis customer) {
+        if (customer.id != null || customer.name.isEmpty()) {
             throw new WebApplicationException("Invalid customer set on request", 422);
         }
 
@@ -215,8 +220,8 @@ public class ShopResource {
     }
     
     @POST
-    public Uni<Response> updateCustomer(Customer customer) {
-        if (customer.id == null || (customer.name == null || customer.name.length() == 0))  {
+    public Uni<Response> updateCustomer(CustomerRedis customer) {
+        if (customer.id == null || (customer.name == null || customer.name.isEmpty()))  {
             throw new WebApplicationException("Invalid customer set on request", 422);
         }
 
@@ -227,7 +232,7 @@ public class ShopResource {
 
     @DELETE
     @Path("/customer-redis/{id}")
-    public Uni<Response> deleteCustomer(@RestPath Long id) {
+    public Uni<Response> deleteCustomerRedis(@RestPath Long id) {
         return customerService.deleteCustomer(id)
             .onItem().transform(i -> Response.ok().status(Response.Status.NO_CONTENT).build())
             .onFailure().recoverWithItem(Response.ok().status(Response.Status.NOT_FOUND).build());

@@ -12,4 +12,8 @@ public class UserProfile extends PanacheEntity {
     public static Uni<UserProfile> findByName(String name) {
         return UserProfile.find("name", name).firstResult();
     }
+
+    public String getName() {
+        return this.name;
+    }
 }
