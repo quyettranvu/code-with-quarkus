@@ -1,12 +1,10 @@
 package org.acme.messages;
 
 import io.smallrye.mutiny.Multi;
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
-import javax.enterprise.context.ApplicationScoped;
 import java.time.Duration;
 import java.util.List;
 
@@ -14,7 +12,7 @@ import java.util.List;
 public class StreamingMessageResolver {
 
     @Outgoing("ticks")
-    public Multi<MessageTemplate> ticks() {
+    public Multi<Long> ticks() {
         return Multi.createFrom().ticks().every(Duration.ofSeconds(1))
                     .onOverflow().drop();
     }

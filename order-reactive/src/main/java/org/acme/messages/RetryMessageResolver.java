@@ -1,14 +1,14 @@
 package org.acme.messages;
 
 import io.smallrye.mutiny.Multi;
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.eclipse.microprofile.faulttolerance.Retry;
 
-import javax.enterprise.context.ApplicationScoped;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Random;
 
 @ApplicationScoped
 public class RetryMessageResolver {
@@ -16,8 +16,8 @@ public class RetryMessageResolver {
     @Outgoing("ticks")
     public Multi<MessageTemplate> ticks() {
         return Multi.createFrom().ticks().every(Duration.ofSeconds(1))
-                    .onOverflow().drop()
-                    .onItem().transform(MessageTemplate::new);
+                .onOverflow().drop()
+                .onItem().transform(l -> new MessageTemplate<>(String.valueOf(l)));
     }
 
     @Incoming("ticks")
@@ -25,7 +25,8 @@ public class RetryMessageResolver {
     @Retry(maxRetries = 10, delay = 1, delayUnit = ChronoUnit.SECONDS)
     public MessageTemplate<String> resolve(MessageTemplate<String> ticks) {
         simulateError();
-        return ticks.withPayload();
+        String newPayload = "tick-" + ticks.getPayload();
+        return new MessageTemplate<>(newPayload);
     }
 
     @Incoming("resolve")

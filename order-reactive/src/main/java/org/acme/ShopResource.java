@@ -112,11 +112,11 @@ public class ShopResource {
 
     @GET
     @Path("/recommendations")
-    @Produces(MediaType.SERVER_SENT_EVENTS) // Server-sent events, streaming protocol over HTTP continuously sent to the client from server, incorporating automatical updates
+    @Produces(MediaType.SERVER_SENT_EVENTS) // Server-sent events, streaming protocol over HTTP continuously sent to the client from server, incorporating automatically updates
     public Multi<Product> getRecommendations() {
         return Multi.createFrom().ticks().every(Duration.ofSeconds(1))
-                .onOverflow().drop() // since the backpressure is not appropriate in this context cause we want all the latest recommendations as fast as possible, so choosing dropif overflowing
-                .onItem().transformToUniAndConcatenate(x -> productService.getRecommendations());
+                .onOverflow().drop() // since the backpressure is not appropriate in this context cause we want all the latest recommendations as fast as possible, so choosing drop if overflowing
+                .onItem().transformToUniAndConcatenate(x -> productService.getRecommendedProduct());
     }
 
     @GET

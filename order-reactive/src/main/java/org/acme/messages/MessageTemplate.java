@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class MessageTemplate implements Message<String> {
+public class MessageTemplate<S> implements Message<String> {
 
     private final String payload;
 
@@ -21,15 +21,15 @@ public class MessageTemplate implements Message<String> {
     }
 
     @Override
-    public Supplier<CompletionState<Void>> getAck() {
+    public Supplier<CompletionStage<Void>> getAck() {
         return () -> {
             System.out.println("Acknowledgment for " + payload);
             return CompletableFuture.completedFuture(null);
-        }
+        };
     }
 
-    @Override 
-    public Funtion<Throwable, CompletionStage<Void>> getNack() {
+    @Override
+    public Function<Throwable, CompletionStage<Void>> getNack() {
         return reason ->  {
             System.out.println("Negative acknowledgment for " + payload + ", the reason is " + reason);
             return CompletableFuture.completedFuture(null);

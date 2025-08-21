@@ -1,6 +1,7 @@
 package org.acme.services;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -9,6 +10,7 @@ import org.acme.entity.orders.Product;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
 public class ProductService {
@@ -22,12 +24,22 @@ public class ProductService {
 
     public Uni<Void> createProduct(String name) {
         Product product = new Product();
-        product.name = name;
+        product.setName(name);
         return Panache.withTransaction(product::persist).replaceWithVoid();
     }
-    
+
     public Multi<Product> getAllProducts() {
-        return Product.streamAll();
+        int pageSize = 500;
+        AtomicInteger pageIndex = new AtomicInteger();
+
+        return Multi.createBy().repeating().uni(
+                        () -> pageIndex,
+                        index -> Product.findAll()
+                                .page(Page.of(index.getAndIncrement(), pageSize))
+                                .list()
+                )
+                .whilst(list -> !list.isEmpty())     // stop when a page is empty
+                .onItem().disjoint();                // flatten List<Product> into Product items
     }
 
     public Uni<Product> getRecommendedProduct() {
