@@ -25,6 +25,10 @@ public class ProductService {
         product.name = name;
         return Panache.withTransaction(product::persist).replaceWithVoid();
     }
+    
+    public Multi<Product> getAllProducts() {
+        return Product.streamAll();
+    }
 
     public Uni<Product> getRecommendedProduct() {
         Random random = new Random();

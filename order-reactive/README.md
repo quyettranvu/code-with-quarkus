@@ -83,3 +83,13 @@ When finished, run the below to stop and remove the services:
 docker compose stop
 docker compose rm
 ```
+
+
+### Message and Acknowledgement in Reactive Communication in System
+
+# Supplier & Function
+- Supplier: không có đầu vào, dùng khi muốn xác nhận đã xử lý xong, đạt được tính lazy (chỉ chạy khi get())
+- Function: có đầu vào, theo dạng <Input type, output type> , dùng khi cần xử lý cả trường hợp thành công và xảy ra lỗi, cũng đạt được tính lazy (chỉ chạy khi được apply reason). 
+
+# Fault Tolerance and Retry Processing
+This can be done with onFailture.retry of Multiny API, but in source also demo the use of SmallRye Fault-Tolerance and @Retry annotation.
