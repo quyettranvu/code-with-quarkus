@@ -124,11 +124,10 @@ public class ShopResource {
     public Uni<String> getRandomRecommendations() {
         Uni<UserProfile> uni1 = userService.getRandomUser();
         Uni<Product> uni2 = productService.getRecommendedProduct();
-        Uni.combine().all().unis(uni1, uni2).asTuple() //convert to tuple
-                .onItem().transform(tuple -> "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().name);
-                return Multi.createBy().combining().streams(u, p).asTuple()
-                            .onItem().transform(    tuple -> "Hello " + tuple.getItem1().name + ", we recommend you "
-                            + tuple.getItem2().name);
+        return Uni.combine().all().unis(uni1, uni2).asTuple()
+            .onItem().transform(tuple ->
+                "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().name
+            );
         }
 
     @GET
@@ -147,8 +146,8 @@ public class ShopResource {
 
     @GET
     @Path("/customers")
-    public Multi<Customer> findAllCustomers() {
-        return Customer.streamAll(Sort.by("name"));
+    public Uni<List<Customer>> findAllCustomers() {
+        return Customer.findAll(Sort.by("name")).list();
     }
 
     @GET
@@ -236,5 +235,42 @@ public class ShopResource {
         return customerService.deleteCustomer(id)
             .onItem().transform(i -> Response.ok().status(Response.Status.NO_CONTENT).build())
             .onFailure().recoverWithItem(Response.ok().status(Response.Status.NOT_FOUND).build());
+    }
+
+    @Channel("upload")
+    Emitter<Person> emitter;
+
+    @POST
+    public Uni<Response> upload(Person person) {
+        System.out.println("emitting " + person.name + " / " + emitter.isCancelled());
+        return Uni.createFrom().completionStage(() -> {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            Message<Person> msg = Message.of(person, () -> {
+                System.out.println("Ack " + person.name);
+                future.complete(null);
+                return CompletableFuture.completedFuture(null);
+            }, f -> {
+                System.out.println("Nack " + person.name + " " + f.getMessage());
+                future.completeExceptionally(f);
+                return CompletableFuture.completedFuture(null);
+            });
+            emitter.send(msg);
+            return future;
+        })
+                .replaceWith(Response.accepted().build())
+                .onFailure().recoverWithItem(t -> Response.status(Response.Status.BAD_REQUEST).entity(t.getMessage()).build());
+    }
+
+    @GET
+    public Uni<List<Person>> getAll() {
+        return Person.listAll();
+    }
+
+    @POST
+    @Path("/post")
+    public Uni<Response> post(Person person) {
+        return Panache.withTransaction(() -> person.persistAndFlush())
+                .replaceWith(Response.accepted().build())
+                .onFailure().recoverWithItem(t -> Response.status(Response.Status.BAD_REQUEST).entity(t.getMessage()).build());
     }
 }

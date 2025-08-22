@@ -73,4 +73,8 @@ public class OrderService {
             .onItem().transform(Order::from)
             .collect().asList();
     }
+
+    public Uni<List<Order>> getAllOrdersForCustomer(Long customerId) {
+        return Order.find("userId = ?1", customerId).list();
+    }
 }
