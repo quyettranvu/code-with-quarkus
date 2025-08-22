@@ -7,6 +7,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.acme.entity.customer.Customer;
+import org.acme.entity.users.Person;
 import org.acme.entity.users.UserProfile;
 import org.acme.services.CustomerRedisService;
 import org.acme.services.OrderService;
@@ -23,10 +24,14 @@ import org.acme.entity.orders.Product;
 import org.acme.entity.customer.CustomerRedis;
 import org.acme.dto.ProductModel;
 import org.acme.utils.StringUtil;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.resteasy.reactive.RestPath;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.smallrye.mutiny.helpers.spies.Spy.onFailure;
@@ -126,7 +131,7 @@ public class ShopResource {
         Uni<Product> uni2 = productService.getRecommendedProduct();
         return Uni.combine().all().unis(uni1, uni2).asTuple()
             .onItem().transform(tuple ->
-                "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().name
+                "Hello " + tuple.getItem1().name + ", we recommend you " + tuple.getItem2().getName()
             );
         }
 
@@ -155,7 +160,7 @@ public class ShopResource {
     public Uni<Response> getCustomer(@RestPath Long id) {
         Uni<Customer> customerUni = Customer.<Customer>findById(id)
                  .onItem().ifNull().failWith(new WebApplicationException("Failed to find customer", Response.Status.NOT_FOUND));
-        Uni<List<Order>> customerOrdersUni = orderService.getAllOrdersForCustomer();
+        Uni<List<Order>> customerOrdersUni = orderService.getAllOrdersForCustomer(id);
         return Uni.combine()
                 .all().unis(customerUni, customerOrdersUni).asTuple()
                 .onItem().transform(customer -> Response.ok().build());

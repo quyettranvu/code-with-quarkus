@@ -1,9 +1,8 @@
 package org.acme.entity.users;
 
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 
 @Entity
 public class Person extends PanacheEntity {

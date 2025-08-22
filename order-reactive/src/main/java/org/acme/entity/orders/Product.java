@@ -18,7 +18,7 @@ public class Product extends PanacheEntity {
     public Set<Order> orders = new HashSet<>();
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
