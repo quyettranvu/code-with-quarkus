@@ -93,3 +93,9 @@ docker compose rm
 
 # Fault Tolerance and Retry Processing
 This can be done with onFailture.retry of Multiny API, but in source also demo the use of SmallRye Fault-Tolerance and @Retry annotation.
+
+### Committing Strategies in Kafka:
+Quy định cách xác nhận (acknowledge) đã xử lý xong một message:
+• Throttled: Quarkus sẽ commit offset định kỳ sau một khoảng thời gian hoặc sau một số lượng bản ghi nhất định, thay vì commit ngay lập tức cho từng record -> giảm overhead khi phải commit liên tục.
+• Ignore: Không commit offset, consumer sẽ không thông báo cho Kafka rằng nó đã xử lý xong record -> thích hợp khi muốn kiểm soát offset bên ngoài Kafka (như lưu offset vào DB riêng), hoặc khi cần xử lý lại message nhiều lần.
+• Latest: Commit ngay lập tức offset mới nhất, bất kể đã xử lý xong hết message hay chưa -> Nếu ứng dụng chết sau khi commi nhưng trước khi xử lý xong, một số message sẽ bị mất, không được xử lý lại -> risk of data loss.

@@ -73,6 +73,7 @@
         <module>server-reactive</module>
         <module>order-reactive</module>
         <module>multiny-reactive-management</module>
+        <module>event-bus</module>
     </modules>
 
 </project>
